@@ -33,9 +33,9 @@ RUN_ROOT="${RUN_ROOT:-/work/$USER/synthetic_dataset_TC}"
 # Override via: sbatch --export=ALL,TOPICS="Art,Books,Cars" ...
 TOPICS="${TOPICS:-Art,Books,Cars}"
 
-# Optional: set to 0 to run TTS only (recommended for batch runs; export once at the end).
-# Override via: sbatch --export=ALL,DO_EXPORT=0 ...
-DO_EXPORT="${DO_EXPORT:-1}"
+# Optional: set to 1 to run HF export after TTS (requires push_dataset_to_hub.py).
+# Default 0 (TTS only). Override via: sbatch --export=ALL,DO_EXPORT=1 ...
+DO_EXPORT="${DO_EXPORT:-0}"
 
 mkdir -p "/work/$USER/slurm_logs"
 
