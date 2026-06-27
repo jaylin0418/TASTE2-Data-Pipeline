@@ -24,8 +24,8 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Any
 
-# syn_ver2_breezy lives in dialogue_v1/
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "dialogue_v1"))
+# syn_ver2_breezy lives in pipeline_v1_tc/
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline_v1_tc"))
 
 import torch
 import torchaudio
