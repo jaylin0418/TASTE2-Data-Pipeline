@@ -6,6 +6,23 @@
 
 ---
 
+## Demo 音訊樣本
+
+`samples/` 資料夾包含各資料集的 25 秒示範片段（128kbps MP3，立體聲：左聲道 User、右聲道 Agent）：
+
+| 檔案 | Pipeline | 說明 |
+|------|----------|------|
+| `tc_neutral_Work.mp3` | tc | 無情緒控制，Work 主題 |
+| `variant_Travel_neutral.mp3` | variant | Travel scenario5，中性 |
+| `variant_Travel_emotion_happy.mp3` | variant | 同劇本，快樂情緒 |
+| `variant_Travel_speed_slow.mp3` | variant | 同劇本，放慢語速 |
+| `variant_Travel_whisper.mp3` | variant | 同劇本，耳語 |
+| `para_Music_speed_request.mp3` | para | 使用者請求加快語速的對話 |
+
+> variant 的四個樣本（neutral / emotion_happy / speed_slow / whisper）使用完全相同的對話劇本，展示副語言控制的效果。
+
+---
+
 ## 產生的四種資料集
 
 | 資料集 | Pipeline | 說明 |
