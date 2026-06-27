@@ -99,7 +99,7 @@ FAILED=()
 run_topic() {
   local topic="$1"
   echo "[START] $topic"
-  "$PYTHON_BIN" ../dialogue_v2_para/syn_para_breezy.py \
+  "$PYTHON_BIN" ../pipeline_v2_para/syn_para_breezy.py \
     --config-name base_variant_breezy \
     data_root="$DATA_ROOT" \
     scenario.topic="$topic" \

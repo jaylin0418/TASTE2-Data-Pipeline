@@ -2287,11 +2287,11 @@ def _default_run_timestamp() -> str:
 def _default_run_root_base() -> Path:
     """Preferred base folder for new runs.
 
-    If /work/jaylin0418 exists (common workspace mount), write all new outputs there.
+    If /work/$USER exists (common workspace mount), write all new outputs there.
     Fallback to current working directory otherwise.
     """
 
-    cand = Path("/work/jaylin0418")
+    cand = Path("/work") / os.environ.get("USER", "") 
     if cand.exists() and cand.is_dir():
         return cand
     return Path.cwd()
@@ -3635,11 +3635,11 @@ def tts_batch(cfg, on_dialogue_done=None):
     if reference_source in {"common_voice_validated", "commonvoice_validated", "cv_validated"}:
         cv_tsv = cfg.tts.get(
             "common_voice_validated_tsv",
-            "/home/jaylin0418/SpeechLab/ref_audio/cv-corpus-24.0-2025-12-05/zh-TW/validated.tsv",
+            str(Path.home() / "ref_audio/cv-corpus/zh-TW/validated.tsv"),
         )
         cv_clips = cfg.tts.get(
             "common_voice_clips_dir",
-            "/home/jaylin0418/SpeechLab/ref_audio/cv-corpus-24.0-2025-12-05/zh-TW/clips",
+            str(Path.home() / "ref_audio/cv-corpus/zh-TW/clips"),
         )
 
         cv_tsv_path = Path(str(cv_tsv)).expanduser()
@@ -3652,7 +3652,7 @@ def tts_batch(cfg, on_dialogue_done=None):
 
         cv_allowed_clips_tsv = cfg.tts.get(
             "common_voice_allowed_clips_tsv",
-            "/home/jaylin0418/SpeechLab/ref_audio/cv-corpus-24.0-2025-12-05/zh-TW/clip_durations_filtered.tsv",
+            str(Path.home() / "ref_audio/cv-corpus/zh-TW/clip_durations_filtered.tsv"),
         )
         cv_allowed_clips_path = Path(str(cv_allowed_clips_tsv)).expanduser()
         if not cv_allowed_clips_path.is_absolute():
@@ -3676,7 +3676,7 @@ def tts_batch(cfg, on_dialogue_done=None):
     if reference_source in {"eleven_lab_emotion", "elevenlabs_emotion"}:
         eleven_lab_dir = cfg.tts.get(
             "eleven_lab_emotion_dir",
-            "/home/jaylin0418/SpeechLab/ref_audio/eleven_lab_emotion",
+            str(Path.home() / "ref_audio/eleven_lab_emotion"),
         )
         eleven_lab_path = Path(str(eleven_lab_dir)).expanduser()
         known_emotions = list(cfg.get("emotion", []))
@@ -4096,7 +4096,7 @@ class PipelineConfig:
 
     multi_topic_run: OmegaConf = OmegaConf.create(
         {
-            "output_root_base": "/work/jaylin0418",
+            "output_root_base": str(Path("/work") / os.environ.get("USER", "user")),
             "workers": 2,
             "per_topic_count": 130,
             "batch_size": 10,

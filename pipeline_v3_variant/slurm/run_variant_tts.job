@@ -32,16 +32,16 @@
 
 set -euo pipefail
 
-REPO_DIR="$HOME/SpeechLab/open_source"
-PYTHON_BIN="$HOME/miniconda3/envs/breezyvoice_py310/bin/python"
-CFG="$REPO_DIR/conf/base_variant_breezy.yaml"
-DATA_ROOT="${DATA_ROOT:-/work/jaylin0418/syn_variant}"
+REPO_ROOT="$HOME/TASTE2-Data-Pipeline"
+PYTHON_BIN="${SYN_PYTHON:-$HOME/miniconda3/envs/breezyvoice_py310/bin/python}"
+CFG="$REPO_ROOT/pipeline_v3_variant/conf/base_variant_breezy.yaml"
+DATA_ROOT="${DATA_ROOT:-/work/$USER/syn_variant}"
 ENGINE="${ENGINE:-indextts2}"
 WORKERS_PER_GPU="${WORKERS_PER_GPU:-6}"
 
 mkdir -p "/work/$USER/slurm_logs"
 
-cd "$REPO_DIR"
+cd "$REPO_ROOT"
 source "$HOME/miniconda3/etc/profile.d/conda.sh"
 conda activate breezyvoice_py310
 

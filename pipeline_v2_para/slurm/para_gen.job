@@ -26,7 +26,7 @@
 
 set -euo pipefail
 
-REPO_DIR="$HOME/SpeechLab/open_source"
+REPO_DIR="$HOME/TASTE2-Data-Pipeline/pipeline_v2_para"
 TOPIC="${TOPIC:-Travel}"
 N_SCENARIOS="${N_SCENARIOS:-5}"
 RUN_ROOT="${RUN_ROOT:-/work/$USER/syn_para}"

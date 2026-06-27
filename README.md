@@ -42,7 +42,37 @@ bash env/bootstrap_breezyvoice_py310.sh
 
 BreezyVoice model 會在第一次執行時自動從 HuggingFace 下載（`MediaTek-Research/BreezyVoice-300M`）。
 
-**Reference audio**：需準備台灣口音說話人的參考音檔，放在 yaml 設定的 `tts.eleven_lab_emotion_dir` 或 CommonVoice 路徑下。詳見各 pipeline 的 `conf/*.yaml`。
+需額外 clone BreezyVoice 原始碼 repo：
+
+```bash
+git clone https://github.com/MediaTek-Research/BreezyVoice ~/BreezyVoice
+# 或設定環境變數指向你的 clone 位置：
+export BREEZYVOICE_REPO_DIR=/path/to/BreezyVoice
+```
+
+**Reference audio**：
+
+- `tc` pipeline 使用 [Mozilla Common Voice zh-TW](https://commonvoice.mozilla.org/zh-TW/datasets) 作為 TTS ref audio。下載後放至：
+  ```
+  ~/ref_audio/cv-corpus/zh-TW/validated.tsv
+  ~/ref_audio/cv-corpus/zh-TW/clips/
+  ```
+- `para` / `variant` pipeline 使用 ElevenLabs 情緒音檔（自備，按情緒分類），放至 `~/ref_audio/eleven_lab_emotion/`，結構：
+  ```
+  eleven_lab_emotion/
+  ├── male/
+  │   ├── ranbir_1.wav, ranbir_2.wav, ranbir_3.wav
+  │   ├── roger_1.wav ...
+  │   └── ...
+  └── female/
+      ├── river_1.wav ...
+      └── ...
+  ```
+- `variant` IndexTTS-2 引擎需額外準備 `~/whisper_emo_ref.wav`（whisper 風格參考音）。
+
+各路徑可透過環境變數覆蓋：`REF_AUDIO_ROOT`、`WHISPER_EMO_REF`、`INDEXTTS_DIR`（詳見 `pipeline_v3_variant/run_variant_tts.py`）。
+
+conf/*.yaml 中的路徑使用 OmegaConf `${oc.env:HOME}` / `${oc.env:USER}` resolver 自動取得目前使用者的 `$HOME` / `$USER`，clone 後不需手動修改路徑。
 
 ---
 

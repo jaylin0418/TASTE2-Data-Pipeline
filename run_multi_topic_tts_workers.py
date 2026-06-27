@@ -84,7 +84,7 @@ def _run_one_topic(
 
     # Use unified run_variant_tts.py when engine is specified
     if engine:
-        script = str(_script_dir() / "dialogue_v3_variant" / "run_variant_tts.py")
+        script = str(_script_dir() / "pipeline_v3_variant" / "run_variant_tts.py")
         cmd = [
             str(python_bin), script,
             "--engine", engine,

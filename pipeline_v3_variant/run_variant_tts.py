@@ -5,20 +5,20 @@ Supports IndexTTS-2 and BreezyVoice backends.
 Usage:
   # IndexTTS-2 (single topic)
   python run_variant_tts.py --engine indextts2 \\
-      --data-root /work/jaylin0418/syn_variant --topic Art --device cuda:1
+      --data-root /work/$USER/syn_variant --topic Art --device cuda:1
 
   # IndexTTS-2 (all topics)
   python run_variant_tts.py --engine indextts2 \\
-      --data-root /work/jaylin0418/syn_variant --device cuda:1
+      --data-root /work/$USER/syn_variant --device cuda:1
 
   # BreezyVoice (single topic)
   python run_variant_tts.py --engine breezyvoice \\
-      --data-root /work/jaylin0418/syn_variant --topic Art \\
+      --data-root /work/$USER/syn_variant --topic Art \\
       --config conf/base_variant_breezy.yaml
 
   # BreezyVoice (all topics — iterates topic dirs)
   python run_variant_tts.py --engine breezyvoice \\
-      --data-root /work/jaylin0418/syn_variant \\
+      --data-root /work/$USER/syn_variant \\
       --config conf/base_variant_breezy.yaml
 
 Speaker assignment:
@@ -37,8 +37,8 @@ from __future__ import annotations
 
 import sys as _sys
 from pathlib import Path as _Path
-# syn_para_breezy lives in dialogue_v2_para/
-_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "dialogue_v2_para"))
+# syn_para_breezy lives in pipeline_v2_para/
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "pipeline_v2_para"))
 
 import argparse
 import json
@@ -62,9 +62,17 @@ import torch
 import torchaudio
 
 # ── Shared constants ──────────────────────────────────────────────────────────
+# Paths can be overridden via environment variables:
+#   INDEXTTS_DIR         path to cog-IndexTTS-2 repo clone
+#   REF_AUDIO_ROOT       path to ref audio dir (emotion wav files, organized by gender/)
+#   WHISPER_EMO_REF      path to whisper_emo_ref.wav
+#   BREEZYVOICE_REPO_DIR path to BreezyVoice repo clone
+#   SYN_PYTHON           python binary for BreezyVoice subprocess (default: current interpreter)
 
-INDEXTTS_DIR   = "/work/jaylin0418/cog-IndexTTS-2"
-REF_AUDIO_ROOT = Path("/home/jaylin0418/SpeechLab/ref_audio/eleven_lab_emotion")
+INDEXTTS_DIR   = os.environ.get("INDEXTTS_DIR",
+                     str(Path("/work") / os.environ.get("USER", "user") / "cog-IndexTTS-2"))
+REF_AUDIO_ROOT = Path(os.environ.get("REF_AUDIO_ROOT",
+                     str(Path.home() / "ref_audio" / "eleven_lab_emotion")))
 
 MALE_SPEAKERS   = ["ranbir", "roger", "charlie", "george", "callum", "harry"]
 FEMALE_SPEAKERS = ["river", "bella", "sarah", "laura"]
@@ -83,12 +91,13 @@ EMOTION_VECTORS: Dict[str, List[float]] = {
 
 SPEED_FACTORS = {"speed_slow": 0.70, "speed_fast": 1.38}
 
-# 所有 speaker 共用的 whisper emo ref（MP4 轉換後的 WAV，原始檔在 whisper_modification/whisper.wav）
-WHISPER_EMO_REF = Path("/work/jaylin0418/whisper_emo_ref.wav")
+# Whisper ref wav (shared across all speakers). Set WHISPER_EMO_REF to override.
+WHISPER_EMO_REF = Path(os.environ.get("WHISPER_EMO_REF",
+                     str(Path("/work") / os.environ.get("USER", "user") / "whisper_emo_ref.wav")))
 
-# BreezyVoice（combined 引擎用）
-BREEZY_REPO = "/home/jaylin0418/SpeechLab/tts_model/BreezyVoice"
-BREEZY_PY   = "/home/jaylin0418/miniconda3/envs/breezyvoice_py310/bin/python"
+# BreezyVoice (used by combined engine). Set BREEZYVOICE_REPO_DIR / SYN_PYTHON to override.
+BREEZY_REPO = os.environ.get("BREEZYVOICE_REPO_DIR", str(Path.home() / "BreezyVoice"))
+BREEZY_PY   = os.environ.get("SYN_PYTHON", sys.executable)
 
 SAMPLE_RATE  = 24000
 SILENCE_SEC  = 0.25
@@ -774,7 +783,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Variant dataset TTS (IndexTTS-2 or BreezyVoice)")
     parser.add_argument("--engine", choices=["indextts2", "breezyvoice", "combined"], required=True,
                         help="TTS backend to use")
-    parser.add_argument("--data-root", default="/work/jaylin0418/syn_variant",
+    parser.add_argument("--data-root",
+                        default=str(Path("/work") / os.environ.get("USER", "user") / "syn_variant"),
                         help="Root of the syn_variant dataset")
     parser.add_argument("--topic", default="",
                         help="Single topic to process (default: all)")

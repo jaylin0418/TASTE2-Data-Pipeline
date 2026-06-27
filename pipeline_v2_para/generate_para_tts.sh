@@ -91,7 +91,7 @@ args=(
   --topics-per-gpu "$TOPICS_PER_GPU"
   --concurrent-per-gpu "$CONCURRENT_PER_GPU"
   --python-bin "$PYTHON_BIN"
-  --worker-script dialogue_v2_para/run_topic_para_tts.py
+  --worker-script pipeline_v2_para/run_topic_para_tts.py
   --continue-on-error
 )
 

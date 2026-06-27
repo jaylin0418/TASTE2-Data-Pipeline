@@ -18,12 +18,12 @@ set -euo pipefail
 # This job runs TTS using one SLURM task per GPU.
 # Each task picks a disjoint subset of topics (round-robin by rank across all nodes).
 
-REPO_DIR="$HOME/SpeechLab/open_source"
+REPO_DIR="$HOME/TASTE2-Data-Pipeline/pipeline_v1_tc"
 # Override via: sbatch --export=ALL,CFG="/path/to/config.yaml" ...
 CONFIG="${CFG:-$REPO_DIR/conf/base_v2_breezy.yaml}"
 
 # Override via: sbatch --export=ALL,RUN_ROOT="/path" ...
-RUN_ROOT="${RUN_ROOT:-/work/jaylin0418/synthetic_dataset_TC}"
+RUN_ROOT="${RUN_ROOT:-/work/$USER/synthetic_dataset_TC}"
 
 # Run all topics (worker will scan topics under run_root).
 # Override via: sbatch --export=ALL,TOPICS="Art,Books" ...

@@ -55,7 +55,7 @@ CFG="${CFG:-$CFG_DEFAULT}"
 WORKERS="${WORKERS:-10}"
 PER_TOPIC_COUNT="${PER_TOPIC_COUNT:-220}"
 BATCH_SIZE="${BATCH_SIZE:-4}"
-OUTPUT_ROOT_BASE="${OUTPUT_ROOT_BASE:-/work/jaylin0418}"
+OUTPUT_ROOT_BASE="${OUTPUT_ROOT_BASE:-/work/$USER}"
 OVERLAP_FILLER="${OVERLAP_FILLER:-false}"
 WITH_EMOTION="${WITH_EMOTION:-false}"
 TOPICS="${TOPICS:-}"
@@ -80,7 +80,7 @@ Options:
   --with-emotion           Add (emotion:xxx) tags to each dialogue turn (default: off)
   --per-topic-count N      Scenarios per topic (default: 220)
   --batch-size N           Batch size (default: 4)
-  --output-root-base PATH  Output root directory (default: /work/jaylin0418)
+  --output-root-base PATH  Output root directory (default: /work/$USER)
   --topics TOPIC1,TOPIC2   Comma-separated topic list (default: all topics)
 
 Environment overrides:

@@ -52,7 +52,7 @@ def _defaults(config_path: Path) -> Dict[str, object]:
     cfg = _load_pipeline_cfg(config_path)
     mt = cfg.get("multi_topic_run", {}) or {}
     return {
-        "output_root_base": str(mt.get("output_root_base") or "/work/jaylin0418"),
+        "output_root_base": str(mt.get("output_root_base") or str(Path("/work") / os.environ.get("USER", "user"))),
         "workers": int(mt.get("workers") or 1),
         "per_topic_count": int(mt.get("per_topic_count") or 130),
         "batch_size": int(mt.get("batch_size") or cfg.get("batch_run", {}).get("batch_size") or 10),

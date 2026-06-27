@@ -39,7 +39,7 @@ if [[ "$POST_PIP_INSTALLS" == "1" ]] || [[ ! -f "$LOCK_FILE" ]]; then
   echo "[bootstrap] Installing pip requirements (POST_PIP_INSTALLS=1 or no lockfile)..." >&2
   python -m pip install -U pip
   python -m pip install -r "$PROJECT_DIR/requirements.txt"
-  python -m pip install -r "/home/jaylin0418/SpeechLab/tts_model/BreezyVoice/requirements.txt"
+  python -m pip install -r "${BREEZYVOICE_REPO_DIR:-$HOME/BreezyVoice}/requirements.txt"
 fi
 
 echo "[bootstrap] Done. Active env: $ENV_NAME" >&2

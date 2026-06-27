@@ -29,7 +29,7 @@ batch_run:
   final_huggingface_only: true
 
 multi_topic_run:
-  output_root_base: /work/jaylin0418
+  output_root_base: /work/${oc.env:USER,user}
   workers: 2
   per_topic_count: 130
   batch_size: 10
@@ -598,7 +598,7 @@ tts:
   # Use eleven_lab_emotion for all para modes (consistent high-quality voices)
   # emotion_tag will be None for non-emotion dialogues → falls back to any wav for the chosen speaker
   reference_source: eleven_lab_emotion
-  eleven_lab_emotion_dir: /home/jaylin0418/SpeechLab/ref_audio/eleven_lab_emotion
+  eleven_lab_emotion_dir: ${oc.env:HOME}/ref_audio/eleven_lab_emotion
   eleven_lab_speakers:
     ranbir:
       display_name: "Ranbir - Calm, Steady and Clear"
@@ -640,11 +640,11 @@ tts:
       display_name: "Harry - Fierce Warrior"
       voice_id: "SOYHLrjzK2X1ezoPC6cr"
       description: "Fierce Warrior"
-  common_voice_validated_tsv: /home/jaylin0418/SpeechLab/ref_audio/cv-corpus-24.0-2025-12-05/zh-TW/validated.tsv
-  common_voice_clips_dir: /home/jaylin0418/SpeechLab/ref_audio/cv-corpus-24.0-2025-12-05/zh-TW/clips
+  common_voice_validated_tsv: ${oc.env:HOME}/ref_audio/cv-corpus/zh-TW/validated.tsv
+  common_voice_clips_dir: ${oc.env:HOME}/ref_audio/cv-corpus/zh-TW/clips
   common_voice_gender_filter: null
 
-  breezyvoice_repo_dir: /home/jaylin0418/SpeechLab/tts_model/BreezyVoice
+  breezyvoice_repo_dir: ${oc.env:HOME}/BreezyVoice
   breezy_python: python
   model_path: MediaTek-Research/BreezyVoice-300M
 
