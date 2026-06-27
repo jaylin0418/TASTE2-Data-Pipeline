@@ -1,0 +1,55 @@
+#!/bin/bash
+#SBATCH -J para_gen
+#SBATCH -A MST113101
+#SBATCH -p ngs1gpu
+#SBATCH --nodes=1
+#SBATCH --gpus-per-node=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=12
+#SBATCH --mem=64G
+#SBATCH --time=1-00:00:00
+#SBATCH -o /work/%u/slurm_logs/para_%j.out
+#SBATCH -e /work/%u/slurm_logs/para_%j.err
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Paralinguistic control data generation (one topic per run).
+# Controls are selected probabilistically within each dialogue.
+#
+# Required env vars (set via --export):
+#   TOPIC        e.g. Travel | Food | Music ...
+#   N_SCENARIOS  number of scenarios to generate (default: 5)
+#   RUN_ROOT     output root directory (default: /work/$USER/syn_para)
+#
+# Example:
+#   sbatch --export=ALL,TOPIC=Travel,N_SCENARIOS=10 para_gen.job
+# ─────────────────────────────────────────────────────────────────────────────
+
+set -euo pipefail
+
+REPO_DIR="$HOME/SpeechLab/open_source"
+TOPIC="${TOPIC:-Travel}"
+N_SCENARIOS="${N_SCENARIOS:-5}"
+RUN_ROOT="${RUN_ROOT:-/work/$USER/syn_para}"
+
+mkdir -p "/work/$USER/slurm_logs"
+
+cd "$REPO_DIR"
+
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate breezyvoice_py310
+
+python -c "import torch; print('GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'none')"
+
+echo "=============================="
+echo "TOPIC        = $TOPIC"
+echo "N_SCENARIOS  = $N_SCENARIOS"
+echo "RUN_ROOT     = $RUN_ROOT"
+echo "=============================="
+
+python syn_para_breezy.py \
+    data_root="$RUN_ROOT/TEST_syn_para" \
+    scenario.topic="$TOPIC" \
+    scenario.n="$N_SCENARIOS" \
+    huggingface.push_to_hub=false
+
+echo "DONE: $TOPIC"

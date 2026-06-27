@@ -1,0 +1,79 @@
+#!/bin/bash
+#SBATCH -J variant_tts
+#SBATCH -A MST113234
+#SBATCH -p normal2
+#SBATCH --nodes=1
+#SBATCH --gpus-per-node=2
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=160G
+#SBATCH --time=24:00:00
+#SBATCH -o /work/%u/slurm_logs/variant_tts_%j.out
+#SBATCH -e /work/%u/slurm_logs/variant_tts_%j.err
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Combined TTS (BreezyVoice + IndexTTS-2) for full variant dataset.
+#
+# 硬體：1 node，2 × H100 80GB
+# Engine: indextts2 — 每 turn ~70s/8turns ≈ ~9s/turn，全速 GPU 合成
+# 平行策略：每 GPU 同時跑 WORKERS_PER_GPU 個 topic worker
+#   - IndexTTS-2：~9GB/worker
+#   - 6 workers × 9GB = 54GB < 80GB  ✓
+#
+# 預估時間：
+#   - 2 GPU × 6 workers = 12 parallel，41 topics ÷ 12 ≈ 4 rounds ≈ ~8-10hr
+#   - GPU 數量動態偵測，gpu_list/topics_per_gpu 自動計算
+#
+# Override via --export:
+#   ENGINE           combined | indextts2 (default: combined)
+#   WORKERS_PER_GPU  concurrent topics per GPU (default: 3)
+#   DATA_ROOT        syn_variant root
+# ─────────────────────────────────────────────────────────────────────────────
+
+set -euo pipefail
+
+REPO_DIR="$HOME/SpeechLab/open_source"
+PYTHON_BIN="$HOME/miniconda3/envs/breezyvoice_py310/bin/python"
+CFG="$REPO_DIR/conf/base_variant_breezy.yaml"
+DATA_ROOT="${DATA_ROOT:-/work/jaylin0418/syn_variant}"
+ENGINE="${ENGINE:-indextts2}"
+WORKERS_PER_GPU="${WORKERS_PER_GPU:-6}"
+
+mkdir -p "/work/$USER/slurm_logs"
+
+cd "$REPO_DIR"
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+conda activate breezyvoice_py310
+
+echo "=============================="
+echo "ENGINE          = $ENGINE"
+echo "DATA_ROOT       = $DATA_ROOT"
+echo "WORKERS_PER_GPU = $WORKERS_PER_GPU"
+echo "NODE            = $(hostname)"
+echo "GPUs            = $(nvidia-smi -L | wc -l)"
+echo "CPUs            = $(nproc)"
+echo "START           = $(date)"
+echo "=============================="
+
+N_GPUS=$(nvidia-smi -L | wc -l)
+N_TOPICS=$("$PYTHON_BIN" -c "
+import os
+variant_root = os.path.join('$DATA_ROOT', 'variant')
+print(len([d for d in os.listdir(variant_root) if os.path.isdir(os.path.join(variant_root, d))]))
+")
+GPU_LIST=$("$PYTHON_BIN" -c "print(','.join(str(i) for i in range($N_GPUS)))")
+echo "N_GPUS=$N_GPUS  N_TOPICS=$N_TOPICS  WORKERS_PER_GPU=$WORKERS_PER_GPU  GPU_LIST=$GPU_LIST"
+echo "Total workers: $((N_GPUS * WORKERS_PER_GPU)) (all pulling from shared topic queue)"
+
+"$PYTHON_BIN" run_multi_topic_tts_workers.py \
+    --engine "$ENGINE" \
+    --run-root "$DATA_ROOT" \
+    --config "$CFG" \
+    --gpus "$GPU_LIST" \
+    --concurrent-per-gpu "$WORKERS_PER_GPU" \
+    --continue-on-error \
+    --python-bin "$PYTHON_BIN"
+
+echo "=============================="
+echo "ALL DONE: $(date)"
+echo "=============================="

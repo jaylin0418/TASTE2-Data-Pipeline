@@ -1,0 +1,671 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# PARALINGUISTIC CONTROL DATA GENERATION PIPELINE (BreezyVoice)
+# ═══════════════════════════════════════════════════════════════════════════
+# Generates dialogues where user requests voice changes (speed/volume/pitch/emotion).
+# Symmetric pairs: each scenario produces one dialogue per control direction.
+# ═══════════════════════════════════════════════════════════════════════════
+
+hydra:
+  output_subdir: null
+  run:
+    dir: .
+  job:
+    chdir: false
+
+device: cuda
+
+run_root: null
+
+data_root: TEST_syn_para
+
+mode_name: para
+
+topic_folder_suffix: ""
+
+batch_run:
+  topic: ${scenario.topic}
+  batch_size: ${scenario.n}
+  total_count: ${scenario.n}
+  final_huggingface_only: true
+
+multi_topic_run:
+  output_root_base: /work/jaylin0418
+  workers: 2
+  per_topic_count: 130
+  batch_size: 10
+  final_huggingface_only: true
+  topics:
+    - Art
+    - Books
+    - Cars
+    - Celebrities
+    - Coding
+    - Cooking
+    - Education
+    - Events
+    - Fashion
+    - Fitness
+    - Finance
+    - Food
+    - Gaming
+    - Gardening
+    - Health
+    - History
+    - Hobbies
+    - Holidays
+    - Home
+    - Languages
+    - Makeup
+    - Movies
+    - Music
+    - Nature
+    - News
+    - Pets
+    - Philosophy
+    - Photography
+    - Podcasts
+    - Politics
+    - Relationships
+    - Science
+    - Shopping
+    - Social Media
+    - Spirituality
+    - Sports
+    - Technology
+    - Traditions
+    - Travel
+    - Weather
+    - Work
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PARALINGUISTIC CONTROL DIMENSIONS
+# Defines all control types, their post-processing parameters, and Chinese
+# user request phrases. Each control_key maps to one folder suffix.
+# ═══════════════════════════════════════════════════════════════════════════
+para:
+  # Which control dimensions to include. Remove any entry to disable that dim.
+  enabled_dims:
+    - speed
+    - volume
+    - pitch
+    - emotion
+
+  # Probability of a control request on the first eligible turn (turn pair 1+)
+  control_request_frequency_first: 0.5
+  # Probability on turn pairs 1+ when control has NOT yet happened (catch-up)
+  control_request_frequency_catchup: 0.9
+  # Probability of a control request on subsequent turns (after first control happened)
+  # Set to 0.0 to enforce exactly one control per dialogue (sticky to end)
+  control_request_frequency_subsequent: 0.0
+  # Whether users can request returning to normal (disable to keep dims always active)
+  allow_normal_reset: false
+
+  # If true, each dialogue has at most one active control at a time (new control replaces old)
+  single_control: false
+
+  # Probability of resetting to normal when re-selecting an already-active dim
+  normal_reset_prob:
+    pitch: 0.4
+    speed: 0.3
+    volume: 0.3
+    emotion: 0.3
+
+  # Relative sampling weights for each control dimension (higher = more frequent)
+  dim_weights:
+    speed: 3
+    volume: 3
+    pitch: 3
+    emotion: 3
+
+  # All control dimensions with post-processing parameters
+  dims:
+    speed_very_fast:
+      dim: speed
+      value: very_fast
+      fn: time_stretch
+      factor: 1.5
+      user_requests:
+        - "你可以說話快很多嗎，我時間有點趕"
+        - "麻煩你講快一點，越快越好"
+        - "說話快一點好嗎，最好再快一些"
+        - "能不能講話再快一些，我快沒時間了"
+        - "你說話的速度可以再快很多嗎"
+        - "講話超快一點好嗎，我需要趕快知道"
+        - "麻煩加快很多，我很趕"
+        - "說話速度可以快到最快嗎"
+    speed_fast:
+      dim: speed
+      value: fast
+      fn: time_stretch
+      factor: 1.3
+      user_requests:
+        - "你可以說話快一點嗎"
+        - "麻煩你講話稍微快一點"
+        - "你說話可以快一點嗎，我有點趕"
+        - "說話快一點好嗎"
+        - "能不能稍微加快一點速度"
+        - "你說話可以再快一些嗎"
+        - "講話快一點可以嗎，省點時間"
+        - "稍微快一點好嗎，謝謝"
+        - "你可以加快語速嗎"
+        - "麻煩說話快一點，我想快點聽完"
+    speed_slow:
+      dim: speed
+      value: slow
+      fn: time_stretch
+      factor: 0.77
+      user_requests:
+        - "你可以說話慢一點嗎，我想聽清楚"
+        - "麻煩你講慢一點，我聽不太清楚"
+        - "你說話可以慢一點嗎"
+        - "說話慢一點好嗎，我想仔細聽"
+        - "能不能放慢一點速度"
+        - "你可以說慢一些嗎，我在做筆記"
+        - "講話慢一點可以嗎"
+        - "稍微放慢語速好嗎"
+        - "你說話速度可以慢一些嗎，我想跟上"
+        - "麻煩說慢一點，我想每句都聽懂"
+    speed_very_slow:
+      dim: speed
+      value: very_slow
+      fn: time_stretch
+      factor: 0.70
+      user_requests:
+        - "你可以說話很慢嗎，我想每個字都聽清楚"
+        - "麻煩你講慢很多，我需要慢慢消化"
+        - "你說話可以超慢嗎，我不太熟悉這些"
+        - "說話慢很多好嗎，我在學習"
+        - "能不能說得非常慢，我在抄寫"
+        - "你可以放慢非常多嗎，我聽得有點吃力"
+        - "講話慢很多可以嗎，一個字一個字來"
+        - "說得超級慢一點好嗎，我需要仔細理解"
+    volume_very_loud:
+      dim: volume
+      value: very_loud
+      fn: volume_scale
+      factor: 2.0
+      user_requests:
+        - "你聲音可以大很多嗎，我聽不太到"
+        - "麻煩說大聲很多，我這裡有點吵"
+        - "你可以聲音大一點嗎，越大越好"
+        - "說話大聲一點好嗎，大很多"
+        - "能不能超大聲，旁邊很吵"
+        - "你聲音可以放到最大嗎，我幾乎聽不到"
+        - "麻煩大聲非常多，環境太嘈雜了"
+        - "說超大聲好嗎，我在戶外"
+    volume_loud:
+      dim: volume
+      value: loud
+      fn: volume_scale
+      factor: 1.5
+      user_requests:
+        - "你聲音可以大一點嗎"
+        - "麻煩說大聲一點，我這裡有點吵"
+        - "你可以大聲一點嗎"
+        - "說話大聲一點好嗎"
+        - "能不能稍微大聲一點，我有點聽不清楚"
+        - "你聲音可以稍微提高嗎"
+        - "講大聲一點可以嗎"
+        - "音量大一些好嗎"
+        - "你可以把音量調大一點嗎"
+        - "麻煩大聲一點，我耳機音量不夠"
+    volume_quiet:
+      dim: volume
+      value: quiet
+      fn: volume_scale
+      factor: 0.4
+      user_requests:
+        - "你聲音可以小一點嗎"
+        - "麻煩說小聲一點，我在安靜的地方"
+        - "你可以輕聲一點嗎，旁邊有人睡覺"
+        - "說話小聲一點好嗎"
+        - "能不能小聲一些，這裡比較安靜"
+        - "你聲音可以降低一點嗎"
+        - "說輕一點好嗎，有人在休息"
+        - "音量小一點可以嗎"
+        - "你可以把聲音放低一點嗎"
+        - "麻煩小聲說，我在辦公室"
+    volume_very_quiet:
+      dim: volume
+      value: very_quiet
+      fn: volume_scale
+      factor: 0.15
+      user_requests:
+        - "你聲音可以很小聲嗎，我在圖書館"
+        - "麻煩說超小聲，不能吵到別人"
+        - "你可以幾乎悄悄地說嗎，有人在睡覺"
+        - "說話小聲很多好嗎，我在安靜的場合"
+        - "能不能非常小聲，旁邊有嬰兒在睡"
+        - "你可以幾乎耳語嗎，這裡要保持安靜"
+        - "講話超小聲可以嗎，我在考場外"
+        - "聲音盡量壓低好嗎，不能有任何聲音"
+    pitch_very_high:
+      dim: pitch
+      value: very_high
+      fn: pitch_shift
+      semitones: 6
+      user_requests:
+        - "你聲調可以高很多嗎，越高越好"
+        - "麻煩音調拉高很多，我覺得這樣聽起來比較有趣"
+        - "你音調可以非常高嗎"
+        - "說話音調高很多好嗎，盡量高"
+        - "能不能把音調提高非常多"
+        - "你可以用很高的音調說話嗎，越高越好"
+        - "聲調超高一點好嗎，我想聽看看"
+        - "麻煩音調高到最高，謝謝"
+    pitch_high:
+      dim: pitch
+      value: high
+      fn: pitch_shift
+      semitones: 3
+      user_requests:
+        - "你聲調可以高一點嗎"
+        - "麻煩你用高一點的音調說話"
+        - "你說話音調可以高一點嗎，聽起來比較清亮"
+        - "聲音高一點好嗎，聽起來輕柔一些"
+        - "能不能把音調提高一點"
+        - "你音調可以再高一些嗎，感覺比較活潑"
+        - "說話音調高一點好嗎"
+        - "可以用高音調說話嗎，我覺得比較好聽"
+        - "麻煩音調高一點，聽起來比較清晰"
+        - "你可以把聲調拉高一點嗎"
+    pitch_low:
+      dim: pitch
+      value: low
+      fn: pitch_shift
+      semitones: -3
+      user_requests:
+        - "你聲調可以低一點嗎"
+        - "麻煩你用低一點的音調說話"
+        - "你說話音調可以低一點嗎，聽起來比較沉穩"
+        - "聲音低一點好嗎，聽起來比較放鬆"
+        - "能不能把音調降低一點"
+        - "你音調可以再低一些嗎，感覺比較穩重"
+        - "說話音調低一點好嗎"
+        - "可以用低音調說話嗎，我覺得比較舒服"
+        - "麻煩音調低一點，聽起來比較沉穩"
+        - "你可以把聲調壓低一點嗎"
+    pitch_very_low:
+      dim: pitch
+      value: very_low
+      fn: pitch_shift
+      semitones: -6
+      user_requests:
+        - "你聲調可以低很多嗎，越低越好"
+        - "麻煩音調降低很多，聽起來比較深沉"
+        - "你音調可以非常低嗎"
+        - "說話音調低很多好嗎，盡量低"
+        - "能不能把音調降低非常多"
+        - "你可以用很低沉的音調說話嗎，越低越好"
+        - "聲調超低一點好嗎，我想聽看看"
+        - "麻煩音調低到最低，謝謝"
+    speed_normal:
+      dim: speed
+      value: normal
+      fn: time_stretch
+      factor: 1.0
+      user_requests:
+        - "說話速度可以恢復正常嗎"
+        - "你說話速度可以回到正常嗎"
+        - "語速恢復正常就好"
+        - "說話速度恢復正常好嗎"
+        - "速度可以回到正常嗎，剛剛有點不習慣"
+        - "語速回到平常就好"
+        - "語速恢復正常可以嗎"
+        - "說話速度回到平常就好"
+        - "可以用正常速度說話嗎"
+        - "不需要特別調速度，正常說話就好"
+    volume_normal:
+      dim: volume
+      value: normal
+      fn: volume_scale
+      factor: 1.0
+      user_requests:
+        - "聲音可以恢復正常大小嗎"
+        - "音量恢復正常就好"
+        - "音量不需要特別調整，正常就好"
+        - "說話音量可以回到正常嗎"
+        - "音量回到正常大小可以嗎"
+        - "聲音大小回到平常就好"
+        - "聲音大小恢復正常好嗎"
+        - "可以用正常音量說話嗎"
+        - "音量不用特別調整，正常就好"
+        - "回到一般的音量說話就好"
+    pitch_normal:
+      dim: pitch
+      value: normal
+      fn: pitch_shift
+      semitones: 0
+      user_requests:
+        - "音調可以恢復正常嗎"
+        - "聲調恢復正常就好"
+        - "音調不需要特別調整，正常就好"
+        - "說話音調可以回到正常嗎"
+        - "音調回到正常可以嗎"
+        - "聲調回到平常就好"
+        - "聲調恢復一般就好"
+        - "可以用正常音調說話嗎"
+        - "音調不用特別調，正常說就好"
+        - "回到平常的音調說話就好"
+    emotion:
+      dim: emotion
+      value: null
+      fn: ref_audio
+      user_requests: []
+
+  # Agent acknowledgement templates (mapped by control_key) — unused (dead code)
+  agent_ack:
+    speed_very_fast:
+      - "好，我講快一點"
+      - "沒問題，我說話快一點"
+    speed_fast:
+      - "好的，我說話快一點"
+      - "沒問題，我講快一點"
+    speed_slow:
+      - "好，我說慢一點"
+      - "沒問題，我講慢一點讓你聽清楚"
+    speed_very_slow:
+      - "好，我說很慢讓你仔細聽"
+      - "沒問題，我講很慢"
+    volume_very_loud:
+      - "好，我說大聲一點"
+      - "沒問題，我提高音量"
+    volume_loud:
+      - "好的，我說大聲一點"
+      - "沒問題，我大聲說"
+    volume_quiet:
+      - "好，我說小聲一點"
+      - "沒問題，我輕聲說"
+    volume_very_quiet:
+      - "好，我說很小聲"
+      - "沒問題，我輕輕地說"
+    pitch_very_high:
+      - "好，我用很高的音調說"
+      - "沒問題，我把音調拉很高"
+    pitch_high:
+      - "好，我用高一點的音調說"
+      - "沒問題，我調高音調"
+    pitch_low:
+      - "好，我用低一點的音調說"
+      - "沒問題，我調低音調"
+    pitch_very_low:
+      - "好，我用很低沉的音調說"
+      - "沒問題，我把音調壓很低"
+    emotion:
+      - ""
+
+# ═══════════════════════════════════════════════════════════════════════════
+# EMOTION POOL
+# ═══════════════════════════════════════════════════════════════════════════
+emotion:
+  - sad
+  - happy
+  - surprised
+  - afraid
+  - disgusted
+  - angry
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DOMAIN DESCRIPTIONS
+# ═══════════════════════════════════════════════════════════════════════════
+domain_descriptions:
+  Art: 討論繪畫、雕塑或藝術流派，或其他廣泛的藝術主題
+  Books: 討論文學、作者或閱讀偏好，或其他廣泛的書籍主題
+  Cars: 討論車款、駕駛體驗或汽車科技，或其他廣泛的汽車主題
+  Celebrities: 討論知名人物、電影或音樂，或其他廣泛的名人話題
+  Coding: 討論程式語言、軟體開發或程式挑戰，或其他廣泛的程式設計主題
+  Cooking: 討論食譜、烹飪技巧或廚房器具，或其他廣泛的烹飪主題
+  Education: 討論學習方法、科目或教育體制，或其他廣泛的教育主題
+  Events: 討論社交聚會、節慶或特殊場合，或其他廣泛的活動主題
+  Fashion: 討論穿搭風格、流行趨勢或個人美感，或其他廣泛的時尚主題
+  Fitness: 討論健身課表、健身器材或體能目標，或其他廣泛的健身主題
+  Finance: 討論投資、記帳或財務規劃，或其他廣泛的財務主題
+  Food: 討論食譜、餐廳或飲食偏好，或其他廣泛的飲食主題
+  Gaming: 討論電玩遊戲、主機或遊戲策略，或其他廣泛的遊戲主題
+  Gardening: 討論植物照護、園藝工具或景觀設計，或其他廣泛的園藝主題
+  Health: 討論健康習慣、飲食或醫療議題，或其他廣泛的健康主題
+  History: 討論歷史事件、人物或時代背景，或其他廣泛的歷史主題
+  Hobbies: 討論興趣、嗜好或休閒活動，或其他廣泛的嗜好主題
+  Holidays: 討論節日慶典、假期目的地或季節性活動，或其他廣泛的假日主題
+  Home: 討論室內設計、居家佈置或自己動手改造，或其他廣泛的居家主題
+  Languages: 討論語言學習、語言多樣性或翻譯，或其他廣泛的語言主題
+  Makeup: 討論彩妝技巧、美妝產品或化妝品牌，或其他廣泛的美妝主題
+  Movies: 討論喜愛的電影、導演或近期上映作品，或其他廣泛的電影主題
+  Music: 討論樂團、歌曲或演唱會體驗，或其他廣泛的音樂主題
+  Nature: 討論戶外活動、環境議題或自然奇觀，或其他廣泛的自然主題
+  News: 討論時事、新聞來源或近期事件，或其他廣泛的新聞主題
+  Pets: 討論寵物照護、動物行為或喜愛的動物，或其他廣泛的寵物主題
+  Philosophy: 討論存在議題或哲學概念，或其他廣泛的哲學主題
+  Photography: 討論相機器材、攝影技巧或後製編輯，或其他廣泛的攝影主題
+  Podcasts: 討論喜愛的 podcast、單集內容或主持人，或其他廣泛的 podcast 主題
+  Politics: 討論時事、政治人物或政治理念，或其他廣泛的政治主題
+  Relationships: 討論交友經驗、友誼或家庭互動，或其他廣泛的人際關係主題
+  Science: 討論科學發現或理論，或其他廣泛的科學主題
+  Shopping: 討論購物習慣、流行趨勢或線上購物，或其他廣泛的購物主題
+  Social Media: 討論網路平台、網紅或病毒式內容，或其他廣泛的社群媒體主題
+  Spirituality: 討論冥想、正念或心靈實踐，或其他廣泛的心靈主題
+  Sports: 討論球隊、運動員或近期賽事，或其他廣泛的運動主題
+  Technology: 討論新型裝置、軟體或科技趨勢，或其他廣泛的科技主題
+  Traditions: 討論文化習俗、節日或家族傳統，或其他廣泛的傳統習俗主題
+  Travel: 討論喜愛的旅遊地點、旅行經驗或行程規劃，或其他廣泛的旅遊主題
+  Weather: 討論氣候型態、天氣預報或自然災害，或其他廣泛的天氣主題
+  Work: 討論工作職責、職涯目標或職場環境，或其他廣泛的職場主題
+
+stages: [scenario, system_prompt, dialogue, tts, huggingface]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 1: SCENARIO GENERATION
+# ═══════════════════════════════════════════════════════════════════════════
+scenario:
+  model: openai/gpt-4o-mini
+  n: 1
+  max_retries: 3
+  out_file: ${data_root}/${mode_name}/${scenario.topic}${topic_folder_suffix}/txt/scenario/scenarios.json
+  topic: Travel
+  gen:
+    max_tokens: 12000
+    temperature: 0.9
+    top_p: 0.9
+  prompt: |
+    你是一位擅長寫台灣日常情境的編劇。
+
+    任務：以「{topic}」（主題說明：{topic_desc}）為主題，產生剛好 {n} 個多樣化的對話情境。
+    語言：繁體中文（台灣用語），避免簡體字與中國用語（例如：打车、手机、身份证、小区、物业）。
+    補充：{topic} 只是「分類名稱」；請不要在 description 內直接輸出英文的 domain 名稱（例如：不要出現 {topic} 這個英文字）。
+
+    內容規則：
+    - 每個情境 3–4 句，描述真實、合理、貼近日常的狀況與背景。
+    - 使用者有一個與 {topic} 相關的問題/困擾/需求；代理人會提供協助。
+    - 禁止出現任何實際對話內容（不要出現 User:/Agent: 或引號對話）。
+    - 情境要有差異（人物身分、時間壓力、費用、地點、資源限制、突發狀況、規則/流程等）。
+    - 【硬性】盡量避免不必要的英文字母與阿拉伯數字；必要時改用中文口語寫法。
+    - 【硬性】不要出現網址、Email、帳號/代碼、序號、英數混雜型縮寫。
+
+    輸出格式（必須嚴格遵守）：
+    - 只能輸出「純 JSON」一個物件；不要輸出任何解釋、不要用 code block。
+    - 頂層只能有 key："scenarios"。
+    - "scenarios" 是陣列，長度必須等於 {n}。
+    - 每個元素必須是只含一個 key 的物件，key 需從 scenario1 連號到 scenario{n}（不可缺漏）。
+    - 每個 scenario 物件必須包含 description 字串；description 內不可包含換行字元。
+
+    JSON 形狀（示意，請照此結構輸出）：
+    {{
+    "scenarios": [
+      {{
+        "scenario1": {{
+          "description": "（此處填入情境描述：3–4 句、貼近台灣日常、與主題相關；不要換行）"
+        }}
+      }}
+    ]
+    }}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 1.5: SCENARIO-LEVEL SYSTEM PROMPT GENERATION
+# Reads scenarios from {scenario.out_file}.jsonl
+# Writes to: {data_root}/{mode_name}/{topic}/txt/system_prompt_txt/
+# ═══════════════════════════════════════════════════════════════════════════
+system_prompt:
+  model: openai/gpt-4o-mini
+  gen:
+    max_tokens: 512
+    temperature: 0.7
+    top_p: 0.9
+  prompt: |
+    你是一位擅長寫台灣日常口語對話的編劇與提示詞工程師。
+
+    任務：給你一個對話 scenario（JSON，含 id/description），請輸出一段「system prompt」
+    用來引導後續 LLM 生成該情境的多輪對話。
+
+    輸出規則（超硬性，違反即錯）：
+    - 只輸出 system prompt 文字本體；不要前言、不要標籤、不要 code block、不要 JSON。
+    - 最多三句話，內容精準、可操作。
+    - 語言：繁體中文（台灣用語），避免簡體字與中國用語（如：地铁、公交、网约车、微信、支付宝）。
+    - 系統提示必須強調：每一行（每個 turn）就是一個句子，六十五個中文字內、二十二秒內可口說完；超過就刪短。
+    - 提醒角色與互動目標：使用者有困擾/需求，代理人務實協助並追問必要資訊。
+
+    請根據 scenario description 量身寫出 system prompt。
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 2: PARALINGUISTIC DIALOGUE GENERATION
+# User requests a voice change; agent acknowledges and the rest of conversation continues.
+# ═══════════════════════════════════════════════════════════════════════════
+dialogue:
+  user_model: meta-llama/llama-3.3-70b-instruct
+  agent_model: openai/gpt-4o-mini
+
+  max_retries: 3
+
+  user_gen:
+    max_tokens: 256
+    temperature: 0.9
+    top_p: 0.9
+  agent_gen:
+    max_tokens: 512
+    temperature: 0.8
+    top_p: 0.9
+
+  min_turns: 6
+  max_turns: 8
+  per_scenario: 1
+  out_dir: ${data_root}/${mode_name}/${scenario.topic}${topic_folder_suffix}/txt/dialogue
+
+  user_prompt: |
+    你是使用者，正在就情境向代理人求助。
+    語言：繁體中文台灣口語，避免簡體字與中國用語。
+
+    輸出格式（超硬性）：
+    - 只輸出一行一句；六十五個中文字內；二十二秒內可口說完，超過即刪短再輸出。
+    - 不要加 User:；不要旁白/動作；不要任何標頭。
+    - 禁止 Markdown/條列；不要網址、Email、帳號/代碼、序號。
+    - 盡量不用英文字母或阿拉伯數字；儘量不要使用英文詞語，改用中文表達。
+
+  agent_prompt: |
+    角色：你是代理人（Agent），一位說台式中文的助理，直接切入重點、給出可執行的建議並追問必要資訊。
+    語言：繁體中文台灣口語，避免簡體字與中國用語。
+
+    【特別要求】如果使用者請你改變說話方式（速度/音量/音調/語氣），可以用「好」「沒問題」「好的」等簡短中性詞回應，但**不要在文字中描述聲音的具體變化**（例如不要說「我用高音調」），然後繼續回答問題。
+
+    每回合一個重點：一句話內做到「確認/同理＋一個下一步＋一個追問」。
+
+    輸出格式（超硬性）：
+    - 只輸出一行一句；六十五個中文字內；二十二秒內講完，超過即刪短再輸出。
+    - 不要加 Agent:；不要旁白/動作；不要任何標頭。
+    - 禁止 Markdown/條列；不要網址、Email、帳號/代碼、序號。
+    - 盡量不用英文字母或阿拉伯數字；不要使用英文詞語，一律改用中文表達。
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 3: TEXT-TO-SPEECH
+# ═══════════════════════════════════════════════════════════════════════════
+tts:
+  filter_by_current_scenarios: false
+  load_dir: ${data_root}/${mode_name}/${scenario.topic}${topic_folder_suffix}/txt/dialogue
+  wav_dir: ${data_root}/${mode_name}/${scenario.topic}${topic_folder_suffix}/wav
+  backend: breezyvoice
+  sample_rate: 24000
+  same_speaker: false
+  wav_suffix: BreezyVoice
+
+  write_pause_overlap_mix: false
+
+  mix:
+    inter_turn_silence_sec: 0.25
+    overlap_shift_sec_min: 0.8
+    overlap_shift_sec_max: 1.9
+    overlap_pause_sec: 0.02
+
+  cuda_visible_devices: null
+
+  # Use eleven_lab_emotion for all para modes (consistent high-quality voices)
+  # emotion_tag will be None for non-emotion dialogues → falls back to any wav for the chosen speaker
+  reference_source: eleven_lab_emotion
+  eleven_lab_emotion_dir: /home/jaylin0418/SpeechLab/ref_audio/eleven_lab_emotion
+  eleven_lab_speakers:
+    ranbir:
+      display_name: "Ranbir - Calm, Steady and Clear"
+      voice_id: "SGbOfpm28edC83pZ9iGb"
+      description: "Calm, Steady and Clear"
+    bella:
+      display_name: "Bella - Professional, Bright, Warm"
+      voice_id: "hpp4J3VqNfWAUOO0d1Us"
+      description: "Professional, Bright, Warm"
+    roger:
+      display_name: "Roger - Laid-Back, Casual, Resonant"
+      voice_id: "CwhRBWXzGAHq8TQ4Fs17"
+      description: "Laid-Back, Casual, Resonant"
+    sarah:
+      display_name: "Sarah - Mature, Reassuring, Confident"
+      voice_id: "EXAVITQu4vr4xnSDxMaL"
+      description: "Mature, Reassuring, Confident"
+    laura:
+      display_name: "Laura - Enthusiast, Quirky Attitude"
+      voice_id: "FGY2WhTYpPnrIDTdsKH5"
+      description: "Laura - Enthusiast, Quirky Attitude"
+    charlie:
+      display_name: "Charlie - Deep, Confident, Energetic"
+      voice_id: "IKne3meq5aSn9XLyUdCD"
+      description: "Deep, Confident, Energetic"
+    george:
+      display_name: "George - Warm, Captivating Storyteller"
+      voice_id: "JBFqnCBsd6RMkjVDRZzb"
+      description: "Warm, Captivating Storyteller"
+    callum:
+      display_name: "Callum - Husky Trickster"
+      voice_id: "N2lVS1w4EtoT3dr4eOWO"
+      description: "Husky Trickster"
+    river:
+      display_name: "River - Relaxed, Neutral, Informative"
+      voice_id: "SAz9YHcvj6GT2YYXdXww"
+      description: "Relaxed, Neutral, Informative"
+    harry:
+      display_name: "Harry - Fierce Warrior"
+      voice_id: "SOYHLrjzK2X1ezoPC6cr"
+      description: "Fierce Warrior"
+  common_voice_validated_tsv: /home/jaylin0418/SpeechLab/ref_audio/cv-corpus-24.0-2025-12-05/zh-TW/validated.tsv
+  common_voice_clips_dir: /home/jaylin0418/SpeechLab/ref_audio/cv-corpus-24.0-2025-12-05/zh-TW/clips
+  common_voice_gender_filter: null
+
+  breezyvoice_repo_dir: /home/jaylin0418/SpeechLab/tts_model/BreezyVoice
+  breezy_python: python
+  model_path: MediaTek-Research/BreezyVoice-300M
+
+  user_prompt_text_transcription: null
+  agent_prompt_text_transcription: null
+
+  model_dir: index-tts/checkpoints
+  user_ref_audio: null
+  agent_ref_audio: null
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 4: HUGGINGFACE DATASET EXPORT
+# ═══════════════════════════════════════════════════════════════════════════
+huggingface:
+  enabled: true
+  include_pause_overlap: false
+  final_txt_stage: auto
+  mode_override: para
+  dataset_name: synthetic_dialogues_para
+  output_dir: ${data_root}/huggingface_dataset
+  push_to_hub: false
+  hub_repo_id: Jaylin0418/synthetic_dialogue_para_zh
+  hub_private: false
+  hub_revision: null

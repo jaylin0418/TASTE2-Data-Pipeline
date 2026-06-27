@@ -1,0 +1,528 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# VARIANT DATASET GENERATION PIPELINE (BreezyVoice)
+# ═══════════════════════════════════════════════════════════════════════════
+# Each scenario produces 10 dialogues sharing the same base conversation:
+#   1 neutral (no control) + 9 controlled variants
+#   (speed_slow, speed_fast, emotion_sad/happy/surprised/fear/disgust/angry, whisper)
+#
+# LLM runs once per scenario to generate the neutral base; the 9 variants are
+# derived by injecting a user request phrase at turn pair 0 or 1.
+# ═══════════════════════════════════════════════════════════════════════════
+
+hydra:
+  output_subdir: null
+  run:
+    dir: .
+  job:
+    chdir: false
+
+device: cuda
+
+run_root: null
+
+data_root: TEST_syn_variant
+
+mode_name: variant
+
+topic_folder_suffix: ""
+
+# Enable variant mode (neutral base + N controlled variants)
+variants_mode: true
+
+# Which turn pair (0-indexed) to inject the control request.
+# 0 = first user turn, 1 = second user turn (randomly chosen).
+injection_pair_choices: [0, 1]
+
+batch_run:
+  topic: ${scenario.topic}
+  batch_size: ${scenario.n}
+  total_count: ${scenario.n}
+  final_huggingface_only: true
+
+multi_topic_run:
+  output_root_base: /work/jaylin0418
+  workers: 2
+  per_topic_count: 130
+  batch_size: 10
+  final_huggingface_only: true
+  topics:
+    - Art
+    - Books
+    - Cars
+    - Celebrities
+    - Coding
+    - Cooking
+    - Education
+    - Events
+    - Fashion
+    - Fitness
+    - Finance
+    - Food
+    - Gaming
+    - Gardening
+    - Health
+    - History
+    - Hobbies
+    - Holidays
+    - Home
+    - Languages
+    - Makeup
+    - Movies
+    - Music
+    - Nature
+    - News
+    - Pets
+    - Philosophy
+    - Photography
+    - Podcasts
+    - Politics
+    - Relationships
+    - Science
+    - Shopping
+    - Social Media
+    - Spirituality
+    - Sports
+    - Technology
+    - Traditions
+    - Travel
+    - Weather
+    - Work
+
+# ═══════════════════════════════════════════════════════════════════════════
+# VARIANT DEFINITIONS
+# 9 controlled variants derived from the neutral base dialogue.
+# Each variant specifies: dim, value, fn (post-processing), and user_requests.
+# ═══════════════════════════════════════════════════════════════════════════
+variants:
+  speed_slow:
+    dim: speed
+    value: slow
+    fn: time_stretch
+    factor: 0.70
+    user_requests:
+      - "你可以說話慢一點嗎，我想聽清楚"
+      - "麻煩你講慢一點，我有點跟不上"
+      - "你說話速度可以放慢一些嗎"
+      - "說話慢一點好嗎，我在做筆記"
+      - "能不能稍微放慢語速，我想仔細理解"
+      - "你說話慢一點可以嗎，我耳朵不太好"
+      - "語速可以放慢一點嗎，我在學習"
+      - "你說話速度稍微慢一點可以嗎"
+      - "麻煩說得慢一點，我想每個字都聽清楚"
+      - "說話速度慢一點好嗎，我想跟上你的節奏"
+      - "你能不能放慢一點，我需要時間思考"
+      - "慢慢說可以嗎，不用趕"
+
+  speed_fast:
+    dim: speed
+    value: fast
+    fn: time_stretch
+    factor: 1.38
+    user_requests:
+      - "你可以說話快一點嗎，我有點趕時間"
+      - "麻煩說快一點，我時間不多"
+      - "說話快一點好嗎，省點時間"
+      - "能不能加快語速，我很趕"
+      - "你說話可以稍微快一些嗎"
+      - "講快一點可以嗎，我趕著去開會"
+      - "語速快一點好嗎，我知道大概就好"
+      - "你可以加快一點說話嗎，謝謝"
+      - "說快點好嗎，我待會有事"
+      - "麻煩加快語速，我想快點聽完"
+      - "你能說快一點嗎，我趕時間"
+      - "快一點講好嗎，重點就好"
+
+  emotion_sad:
+    dim: emotion
+    value: sad
+    fn: ref_audio
+    user_requests:
+      - "你可以用難過的語氣跟我說話嗎"
+      - "麻煩用比較悲傷的口吻回答我"
+      - "你說話可以感覺悲傷一點嗎"
+      - "我希望你用憂鬱的語調說話"
+      - "能不能用難過的感覺跟我說"
+      - "你說話語氣可以悲傷一些嗎"
+      - "麻煩用低落的語氣跟我說話"
+      - "說話聽起來難過一點好嗎"
+      - "我想聽你用傷心的語氣說話"
+      - "你可以用沉重的語氣說話嗎"
+      - "帶點哀傷的感覺說話可以嗎"
+      - "你說話可以悲悲的嗎，我心情不好"
+
+  emotion_happy:
+    dim: emotion
+    value: happy
+    fn: ref_audio
+    user_requests:
+      - "你可以開心一點說話嗎"
+      - "麻煩用愉快的語氣跟我說話"
+      - "你說話可以感覺快樂一些嗎"
+      - "說話開心一點好嗎，讓氣氛好一點"
+      - "能不能用輕鬆愉快的口吻回答我"
+      - "你語氣可以更歡樂一點嗎"
+      - "麻煩用高興的語調說話"
+      - "我想聽你用開心的語氣說話"
+      - "你說話可以帶點雀躍感嗎"
+      - "用快樂的感覺說話好嗎"
+      - "你說話帶點笑意可以嗎"
+      - "語氣開朗一點好嗎，讓我也開心一點"
+
+  emotion_surprised:
+    dim: emotion
+    value: surprised
+    fn: ref_audio
+    user_requests:
+      - "你可以用驚訝的語氣說話嗎"
+      - "麻煩說話帶點驚訝的感覺"
+      - "你說話可以聽起來很驚訝嗎"
+      - "說話帶點驚奇感好嗎"
+      - "能不能用吃驚的語氣跟我說話"
+      - "你語氣可以表現出驚訝嗎"
+      - "麻煩用驚喜的口吻說話"
+      - "我想聽你用驚訝的語調說話"
+      - "說話帶點沒想到的感覺好嗎"
+      - "你可以用驚呼的語氣說嗎"
+      - "語氣驚訝一點好嗎，讓我感受到你的反應"
+      - "你說話像是很震驚的樣子可以嗎"
+
+  emotion_fear:
+    dim: emotion
+    value: fear
+    fn: ref_audio
+    user_requests:
+      - "你可以用害怕的語氣說話嗎"
+      - "麻煩說話帶點緊張害怕的感覺"
+      - "你說話可以聽起來很不安嗎"
+      - "說話帶點恐懼感好嗎"
+      - "能不能用膽怯的語氣跟我說話"
+      - "你語氣可以表現出擔憂害怕嗎"
+      - "麻煩用惶恐的口吻說話"
+      - "我想聽你用害怕的語調說話"
+      - "說話帶點顫抖緊張的感覺好嗎"
+      - "你可以用忐忑不安的語氣說嗎"
+      - "說話帶點戒慎恐懼的感覺好嗎"
+      - "語氣可以緊張一點嗎，就像在怕什麼"
+
+  emotion_disgust:
+    dim: emotion
+    value: disgust
+    fn: ref_audio
+    user_requests:
+      - "你可以用厭惡的語氣說話嗎"
+      - "麻煩說話帶點嫌棄的感覺"
+      - "你說話可以聽起來很反感嗎"
+      - "說話帶點不屑感好嗎"
+      - "能不能用嫌惡的語氣跟我說話"
+      - "你語氣可以表現出厭倦嗎"
+      - "麻煩用反感的口吻說話"
+      - "我想聽你用厭惡的語調說話"
+      - "說話帶點嫌棄的感覺好嗎"
+      - "你可以用不以為然的語氣說嗎"
+      - "語氣帶點鄙視可以嗎"
+      - "說話讓人感覺你很討厭這件事好嗎"
+
+  emotion_angry:
+    dim: emotion
+    value: angry
+    fn: ref_audio
+    user_requests:
+      - "你可以用生氣的語氣說話嗎"
+      - "麻煩說話帶點憤怒的感覺"
+      - "你說話可以聽起來很火大嗎"
+      - "說話帶點不滿感好嗎"
+      - "能不能用憤怒的語氣跟我說話"
+      - "你語氣可以表現出生氣嗎"
+      - "麻煩用氣憤的口吻說話"
+      - "我想聽你用憤怒的語調說話"
+      - "說話帶點不爽的感覺好嗎"
+      - "你可以用義憤填膺的語氣說嗎"
+      - "語氣激動一點可以嗎，就是那種很火的感覺"
+      - "說話帶點怒氣好嗎"
+
+  whisper:
+    dim: whisper
+    value: whisper
+    fn: ref_audio
+    user_requests:
+      - "你可以用耳語的方式說話嗎"
+      - "麻煩悄悄地跟我說話"
+      - "你說話可以像在耳邊說悄悄話嗎"
+      - "說話輕輕的像耳語好嗎"
+      - "能不能用耳語的方式跟我說"
+      - "你可以輕聲耳語嗎"
+      - "麻煩用很小聲的悄悄話方式說"
+      - "說話像在說祕密一樣好嗎"
+      - "你可以悄聲說話嗎，不要讓別人聽到"
+      - "講話輕一點像耳語可以嗎"
+      - "聲音壓低像在說悄悄話好嗎"
+      - "你可以耳語說話嗎，這裡需要安靜"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DOMAIN DESCRIPTIONS (same as base_para_breezy.yaml)
+# ═══════════════════════════════════════════════════════════════════════════
+domain_descriptions:
+  Art: 討論繪畫、雕塑或藝術流派，或其他廣泛的藝術主題
+  Books: 討論文學、作者或閱讀偏好，或其他廣泛的書籍主題
+  Cars: 討論車款、駕駛體驗或汽車科技，或其他廣泛的汽車主題
+  Celebrities: 討論知名人物、電影或音樂，或其他廣泛的名人話題
+  Coding: 討論程式語言、軟體開發或程式挑戰，或其他廣泛的程式設計主題
+  Cooking: 討論食譜、烹飪技巧或廚房器具，或其他廣泛的烹飪主題
+  Education: 討論學習方法、科目或教育體制，或其他廣泛的教育主題
+  Events: 討論社交聚會、節慶或特殊場合，或其他廣泛的活動主題
+  Fashion: 討論穿搭風格、流行趨勢或個人美感，或其他廣泛的時尚主題
+  Fitness: 討論健身課表、健身器材或體能目標，或其他廣泛的健身主題
+  Finance: 討論投資、記帳或財務規劃，或其他廣泛的財務主題
+  Food: 討論食譜、餐廳或飲食偏好，或其他廣泛的飲食主題
+  Gaming: 討論電玩遊戲、主機或遊戲策略，或其他廣泛的遊戲主題
+  Gardening: 討論植物照護、園藝工具或景觀設計，或其他廣泛的園藝主題
+  Health: 討論健康習慣、飲食或醫療議題，或其他廣泛的健康主題
+  History: 討論歷史事件、人物或時代背景，或其他廣泛的歷史主題
+  Hobbies: 討論興趣、嗜好或休閒活動，或其他廣泛的嗜好主題
+  Holidays: 討論節日慶典、假期目的地或季節性活動，或其他廣泛的假日主題
+  Home: 討論室內設計、居家佈置或自己動手改造，或其他廣泛的居家主題
+  Languages: 討論語言學習、語言多樣性或翻譯，或其他廣泛的語言主題
+  Makeup: 討論彩妝技巧、美妝產品或化妝品牌，或其他廣泛的美妝主題
+  Movies: 討論喜愛的電影、導演或近期上映作品，或其他廣泛的電影主題
+  Music: 討論樂團、歌曲或演唱會體驗，或其他廣泛的音樂主題
+  Nature: 討論戶外活動、環境議題或自然奇觀，或其他廣泛的自然主題
+  News: 討論時事、新聞來源或近期事件，或其他廣泛的新聞主題
+  Pets: 討論寵物照護、動物行為或喜愛的動物，或其他廣泛的寵物主題
+  Philosophy: 討論存在議題或哲學概念，或其他廣泛的哲學主題
+  Photography: 討論相機器材、攝影技巧或後製編輯，或其他廣泛的攝影主題
+  Podcasts: 討論喜愛的 podcast、單集內容或主持人，或其他廣泛的 podcast 主題
+  Politics: 討論時事、政治人物或政治理念，或其他廣泛的政治主題
+  Relationships: 討論交友經驗、友誼或家庭互動，或其他廣泛的人際關係主題
+  Science: 討論科學發現或理論，或其他廣泛的科學主題
+  Shopping: 討論購物習慣、流行趨勢或線上購物，或其他廣泛的購物主題
+  Social Media: 討論網路平台、網紅或病毒式內容，或其他廣泛的社群媒體主題
+  Spirituality: 討論冥想、正念或心靈實踐，或其他廣泛的心靈主題
+  Sports: 討論球隊、運動員或近期賽事，或其他廣泛的運動主題
+  Technology: 討論新型裝置、軟體或科技趨勢，或其他廣泛的科技主題
+  Traditions: 討論文化習俗、節日或家族傳統，或其他廣泛的傳統習俗主題
+  Travel: 討論喜愛的旅遊地點、旅行經驗或行程規劃，或其他廣泛的旅遊主題
+  Weather: 討論氣候型態、天氣預報或自然災害，或其他廣泛的天氣主題
+  Work: 討論工作職責、職涯目標或職場環境，或其他廣泛的職場主題
+
+# Emotion names used by _load_emotion_reference_pool to classify ref audio files.
+# Must match the filename prefixes in eleven_lab_emotion_dir (afraid_*, disgusted_*, etc.)
+emotion:
+  - angry
+  - sad
+  - happy
+  - surprised
+  - afraid
+  - disgusted
+  - whisper
+
+stages: [scenario, system_prompt, dialogue, tts, huggingface]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 1: SCENARIO GENERATION
+# ═══════════════════════════════════════════════════════════════════════════
+scenario:
+  model: openai/gpt-4o-mini
+  n: 1
+  max_retries: 3
+  out_file: ${data_root}/${mode_name}/${scenario.topic}${topic_folder_suffix}/txt/scenario/scenarios.json
+  topic: Travel
+  gen:
+    max_tokens: 12000
+    temperature: 0.9
+    top_p: 0.9
+  prompt: |
+    你是一位擅長寫台灣日常情境的編劇。
+
+    任務：以「{topic}」（主題說明：{topic_desc}）為主題，產生剛好 {n} 個多樣化的對話情境。
+    語言：繁體中文（台灣用語），避免簡體字與中國用語（例如：打车、手机、身份证、小区、物业）。
+    補充：{topic} 只是「分類名稱」；請不要在 description 內直接輸出英文的 domain 名稱（例如：不要出現 {topic} 這個英文字）。
+
+    內容規則：
+    - 每個情境 3–4 句，描述真實、合理、貼近日常的狀況與背景。
+    - 使用者有一個與 {topic} 相關的問題/困擾/需求；代理人會提供協助。
+    - 禁止出現任何實際對話內容（不要出現 User:/Agent: 或引號對話）。
+    - 情境要有差異（人物身分、時間壓力、費用、地點、資源限制、突發狀況、規則/流程等）。
+    - 【硬性】盡量避免不必要的英文字母與阿拉伯數字；必要時改用中文口語寫法。
+    - 【硬性】不要出現網址、Email、帳號/代碼、序號、英數混雜型縮寫。
+
+    輸出格式（必須嚴格遵守）：
+    - 只能輸出「純 JSON」一個物件；不要輸出任何解釋、不要用 code block。
+    - 頂層只能有 key："scenarios"。
+    - "scenarios" 是陣列，長度必須等於 {n}。
+    - 每個元素必須是只含一個 key 的物件，key 需從 scenario1 連號到 scenario{n}（不可缺漏）。
+    - 每個 scenario 物件必須包含 description 字串；description 內不可包含換行字元。
+
+    JSON 形狀（示意，請照此結構輸出）：
+    {{
+    "scenarios": [
+      {{
+        "scenario1": {{
+          "description": "（此處填入情境描述：3–4 句、貼近台灣日常、與主題相關；不要換行）"
+        }}
+      }}
+    ]
+    }}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 1.5: SCENARIO-LEVEL SYSTEM PROMPT GENERATION
+# ═══════════════════════════════════════════════════════════════════════════
+system_prompt:
+  model: openai/gpt-4o-mini
+  gen:
+    max_tokens: 512
+    temperature: 0.7
+    top_p: 0.9
+  prompt: |
+    你是一位擅長寫台灣日常口語對話的編劇與提示詞工程師。
+
+    任務：給你一個對話 scenario（JSON，含 id/description），請輸出一段「system prompt」
+    用來引導後續 LLM 生成該情境的多輪對話。
+
+    輸出規則（超硬性，違反即錯）：
+    - 只輸出 system prompt 文字本體；不要前言、不要標籤、不要 code block、不要 JSON。
+    - 最多三句話，內容精準、可操作。
+    - 語言：繁體中文（台灣用語），避免簡體字與中國用語（如：地铁、公交、网约车、微信、支付宝）。
+    - 系統提示必須強調：每一行（每個 turn）就是一個句子，六十五個中文字內、二十二秒內可口說完；超過就刪短。
+    - 提醒角色與互動目標：使用者有困擾/需求，代理人務實協助並追問必要資訊。
+
+    請根據 scenario description 量身寫出 system prompt。
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 2: DIALOGUE GENERATION (neutral base — no control injection)
+# ═══════════════════════════════════════════════════════════════════════════
+dialogue:
+  user_model: meta-llama/llama-3.3-70b-instruct
+  agent_model: openai/gpt-4o-mini
+
+  max_retries: 3
+
+  user_gen:
+    max_tokens: 256
+    temperature: 0.9
+    top_p: 0.9
+  agent_gen:
+    max_tokens: 512
+    temperature: 0.8
+    top_p: 0.9
+
+  min_turns: 6
+  max_turns: 8
+  per_scenario: 1
+  out_dir: ${data_root}/${mode_name}/${scenario.topic}${topic_folder_suffix}/txt/dialogue
+
+  user_prompt: |
+    你是使用者，正在就情境向代理人求助。
+    語言：繁體中文台灣口語，避免簡體字與中國用語。
+
+    輸出格式（超硬性）：
+    - 只輸出一行一句；六十五個中文字內；二十二秒內可口說完，超過即刪短再輸出。
+    - 不要加 User:；不要旁白/動作；不要任何標頭。
+    - 禁止 Markdown/條列；不要網址、Email、帳號/代碼、序號。
+    - 盡量不用英文字母或阿拉伯數字；儘量不要使用英文詞語，改用中文表達。
+
+  agent_prompt: |
+    角色：你是代理人（Agent），一位說台式中文的助理，直接切入重點、給出可執行的建議並追問必要資訊。
+    語言：繁體中文台灣口語，避免簡體字與中國用語。
+
+    每回合一個重點：一句話內做到「確認/同理＋一個下一步＋一個追問」。
+
+    輸出格式（超硬性）：
+    - 只輸出一行一句；六十五個中文字內；二十二秒內講完，超過即刪短再輸出。
+    - 不要加 Agent:；不要旁白/動作；不要任何標頭。
+    - 禁止 Markdown/條列；不要網址、Email、帳號/代碼、序號。
+    - 盡量不用英文字母或阿拉伯數字；不要使用英文詞語，一律改用中文表達。
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 3: TEXT-TO-SPEECH
+# ═══════════════════════════════════════════════════════════════════════════
+tts:
+  filter_by_current_scenarios: false
+  load_dir: ${data_root}/${mode_name}/${scenario.topic}${topic_folder_suffix}/txt/dialogue
+  wav_dir: ${data_root}/${mode_name}/${scenario.topic}${topic_folder_suffix}/wav
+  backend: breezyvoice
+  sample_rate: 24000
+  same_speaker: false
+  wav_suffix: BreezyVoice
+
+  write_pause_overlap_mix: false
+
+  mix:
+    inter_turn_silence_sec: 0.25
+    overlap_shift_sec_min: 0.8
+    overlap_shift_sec_max: 1.9
+    overlap_pause_sec: 0.02
+
+  cuda_visible_devices: null
+
+  reference_source: eleven_lab_emotion
+  eleven_lab_emotion_dir: /home/jaylin0418/SpeechLab/ref_audio/eleven_lab_emotion
+  eleven_lab_speakers:
+    ranbir:
+      display_name: "Ranbir - Calm, Steady and Clear"
+      voice_id: "SGbOfpm28edC83pZ9iGb"
+      description: "Calm, Steady and Clear"
+    bella:
+      display_name: "Bella - Professional, Bright, Warm"
+      voice_id: "hpp4J3VqNfWAUOO0d1Us"
+      description: "Professional, Bright, Warm"
+    roger:
+      display_name: "Roger - Laid-Back, Casual, Resonant"
+      voice_id: "CwhRBWXzGAHq8TQ4Fs17"
+      description: "Laid-Back, Casual, Resonant"
+    sarah:
+      display_name: "Sarah - Mature, Reassuring, Confident"
+      voice_id: "EXAVITQu4vr4xnSDxMaL"
+      description: "Mature, Reassuring, Confident"
+    laura:
+      display_name: "Laura - Enthusiast, Quirky Attitude"
+      voice_id: "FGY2WhTYpPnrIDTdsKH5"
+      description: "Laura - Enthusiast, Quirky Attitude"
+    charlie:
+      display_name: "Charlie - Deep, Confident, Energetic"
+      voice_id: "IKne3meq5aSn9XLyUdCD"
+      description: "Deep, Confident, Energetic"
+    george:
+      display_name: "George - Warm, Captivating Storyteller"
+      voice_id: "JBFqnCBsd6RMkjVDRZzb"
+      description: "Warm, Captivating Storyteller"
+    callum:
+      display_name: "Callum - Husky Trickster"
+      voice_id: "N2lVS1w4EtoT3dr4eOWO"
+      description: "Husky Trickster"
+    river:
+      display_name: "River - Relaxed, Neutral, Informative"
+      voice_id: "SAz9YHcvj6GT2YYXdXww"
+      description: "Relaxed, Neutral, Informative"
+    harry:
+      display_name: "Harry - Fierce Warrior"
+      voice_id: "SOYHLrjzK2X1ezoPC6cr"
+      description: "Fierce Warrior"
+  common_voice_validated_tsv: /home/jaylin0418/SpeechLab/ref_audio/cv-corpus-24.0-2025-12-05/zh-TW/validated.tsv
+  common_voice_clips_dir: /home/jaylin0418/SpeechLab/ref_audio/cv-corpus-24.0-2025-12-05/zh-TW/clips
+  common_voice_gender_filter: null
+
+  breezyvoice_repo_dir: /home/jaylin0418/SpeechLab/tts_model/BreezyVoice
+  breezy_python: python
+  model_path: MediaTek-Research/BreezyVoice-300M
+
+  user_prompt_text_transcription: null
+  agent_prompt_text_transcription: null
+
+  model_dir: index-tts/checkpoints
+  user_ref_audio: null
+  agent_ref_audio: null
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STAGE 4: HUGGINGFACE DATASET EXPORT
+# ═══════════════════════════════════════════════════════════════════════════
+huggingface:
+  enabled: true
+  include_pause_overlap: false
+  final_txt_stage: auto
+  mode_override: variant
+  dataset_name: synthetic_dialogues_variant
+  output_dir: ${data_root}/huggingface_dataset
+  push_to_hub: false
+  hub_repo_id: Jaylin0418/synthetic_dialogue_variant_zh
+  hub_private: false
+  hub_revision: null
