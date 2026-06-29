@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -J parquet_shuffle_zh
-#SBATCH -A MST115022
+#SBATCH -A YOUR_ACCOUNT          # <-- replace with your SLURM account
 #SBATCH -p 8gpus
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -8,8 +8,18 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=128G
 #SBATCH --time=02:00:00
-#SBATCH -o /work/jaylin0418/IF_data_generation/logs/parquet_shuffle_zh_%j.out
-#SBATCH -e /work/jaylin0418/IF_data_generation/logs/parquet_shuffle_zh_%j.err
+
+# ── USER CONFIGURATION ────────────────────────────────────────────────────────
+BASE=/path/to/your/IF_data_generation        # root working dir for this pipeline
+PYTHON=/path/to/python                       # e.g. ~/miniconda3/envs/myenv/bin/python
+# ─────────────────────────────────────────────────────────────────────────────
+
+SCRIPT_DIR=$(dirname "$(realpath "$0")")/../
+
+mkdir -p $BASE/logs
+
+#SBATCH -o $BASE/logs/parquet_shuffle_zh_%j.out
+#SBATCH -e $BASE/logs/parquet_shuffle_zh_%j.err
 
 echo "=========================================="
 echo "Job: ZH parquet + shuffle/split"
@@ -17,17 +27,17 @@ echo "Job ID: $SLURM_JOB_ID  Node: $SLURM_NODELIST"
 echo "Start: $(date)"
 echo "=========================================="
 
-BASE=/work/jaylin0418/IF_data_generation
-
 echo "--- Step 1: to_parquet ---"
-conda run -n breezyvoice_py310 python3 $BASE/to_parquet_if.py \
+$PYTHON $SCRIPT_DIR/to_parquet_if.py \
     --data-dir $BASE/tts_output_zh/full \
     --out-dir  $BASE/parquet_output_zh \
     --chunk-gb 1.0 \
     --prefix   if_zh
 
 echo "--- Step 2: shuffle + split ---"
-conda run -n breezyvoice_py310 python3 $BASE/shuffle_split_zh.py
+$PYTHON $SCRIPT_DIR/shuffle_split_zh.py \
+    --input-dir  $BASE/parquet_output_zh \
+    --output-dir $BASE/shuffled_output_zh
 
 echo "=========================================="
 echo "End: $(date)"

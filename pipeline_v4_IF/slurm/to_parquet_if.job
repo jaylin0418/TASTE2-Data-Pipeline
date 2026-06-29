@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -J to_parquet_if
-#SBATCH -A MST115022
+#SBATCH -A YOUR_ACCOUNT          # <-- replace with your SLURM account
 #SBATCH -p 8gpus
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -8,8 +8,20 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 #SBATCH --time=04:00:00
-#SBATCH -o /work/jaylin0418/IF_data_generation/logs/to_parquet_if_%j.out
-#SBATCH -e /work/jaylin0418/IF_data_generation/logs/to_parquet_if_%j.err
+
+# ── USER CONFIGURATION ────────────────────────────────────────────────────────
+BASE=/path/to/your/IF_data_generation        # root working dir for this pipeline
+PYTHON=/path/to/python                       # e.g. ~/miniconda3/envs/myenv/bin/python
+# ─────────────────────────────────────────────────────────────────────────────
+
+DATA_DIR=$BASE/tts_output/full
+OUT_DIR=$BASE/parquet_output
+SCRIPT_DIR=$(dirname "$(realpath "$0")")/../
+
+mkdir -p $BASE/logs $OUT_DIR
+
+#SBATCH -o $BASE/logs/to_parquet_if_%j.out
+#SBATCH -e $BASE/logs/to_parquet_if_%j.err
 
 echo "=========================================="
 echo "Job: to_parquet_if"
@@ -17,13 +29,7 @@ echo "Job ID: $SLURM_JOB_ID  Node: $SLURM_NODELIST"
 echo "Start: $(date)"
 echo "=========================================="
 
-DATA_DIR=/work/jaylin0418/IF_data_generation/tts_output/full
-OUT_DIR=/work/jaylin0418/IF_data_generation/parquet_output
-SCRIPT=/work/jaylin0418/IF_data_generation/to_parquet_if.py
-
-mkdir -p "$OUT_DIR"
-
-/home/jaylin0418/miniconda3/envs/breezyvoice_py310/bin/python "$SCRIPT" \
+$PYTHON $SCRIPT_DIR/to_parquet_if.py \
     --data-dir "$DATA_DIR" \
     --out-dir  "$OUT_DIR" \
     --chunk-gb 1.0 \

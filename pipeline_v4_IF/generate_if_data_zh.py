@@ -855,7 +855,9 @@ def main():
     from openai import OpenAI
     client = OpenAI(api_key=args.api_key)
 
-    base_dir = Path(args.output_dir or f"/work/jaylin0418/IF_data_generation/output_zh/{args.mode}")
+    if not args.output_dir:
+        print("ERROR: --output_dir is required"); sys.exit(1)
+    base_dir = Path(args.output_dir)
     raw_dir = base_dir / "raw"
     validated_dir = base_dir / "validated"
     raw_dir.mkdir(parents=True, exist_ok=True)

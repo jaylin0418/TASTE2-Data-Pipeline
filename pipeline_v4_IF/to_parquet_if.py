@@ -204,9 +204,9 @@ def convert(data_dir: str, out_dir: str, chunk_bytes: int = CHUNK_BYTES,
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Convert IF TTS outputs to Parquet for TASTE training")
-    p.add_argument("--data-dir",  default="/work/jaylin0418/IF_data_generation/tts_output/full",
+    p.add_argument("--data-dir",  required=True,
                    help="Root TTS output directory")
-    p.add_argument("--out-dir",   default="/work/jaylin0418/IF_data_generation/parquet_output",
+    p.add_argument("--out-dir",   required=True,
                    help="Output directory for Parquet files")
     p.add_argument("--chunk-gb",  type=float, default=1.0,
                    help="Max GB per Parquet part (default: 1.0)")

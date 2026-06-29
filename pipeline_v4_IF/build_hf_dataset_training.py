@@ -13,13 +13,12 @@ No top-level instruction_audio/response_audio columns (those are only
 needed for the HF Dataset Viewer audio player), so this stays in the
 exact shape sft_processor.py expects.
 """
+import argparse
 import os
 import glob
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-SRC_DIR = "/work/jaylin0418/IF_data_generation/shuffled_output"
-DST_DIR = "/work/jaylin0418/IF_data_generation/shuffled_output_train"
 ROW_GROUP_SIZE = 300
 
 SYSTEM_PROMPT = (
@@ -76,6 +75,15 @@ def process_file(src_path, dst_path):
 
 
 if __name__ == "__main__":
+    p = argparse.ArgumentParser(description="Build training-ready parquet (message[].audio binary, no top-level audio cols)")
+    p.add_argument("--src-dir", required=True, dest="src_dir",
+                   help="Input shuffled parquet directory (shuffled_output/)")
+    p.add_argument("--dst-dir", required=True, dest="dst_dir",
+                   help="Output directory for training-ready parquet files")
+    pargs = p.parse_args()
+    SRC_DIR = pargs.src_dir
+    DST_DIR = pargs.dst_dir
+
     os.makedirs(DST_DIR, exist_ok=True)
     files = sorted(glob.glob(os.path.join(SRC_DIR, "*.parquet")))
     for src in files:

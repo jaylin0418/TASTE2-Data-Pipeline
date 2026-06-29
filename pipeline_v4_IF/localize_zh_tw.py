@@ -2,12 +2,9 @@
 Replace a subset of examples in dataset.jsonl with Taiwan-localized content.
 Run repeatedly safe: always restores from .bak first, then applies full TW_POOL.
 """
-import json, random, shutil
+import argparse, json, random, shutil, sys
 from collections import defaultdict
 from pathlib import Path
-
-INPUT  = "/work/jaylin0418/IF_data_generation/output_zh/full/dataset.jsonl"
-BACKUP = "/work/jaylin0418/IF_data_generation/output_zh/full/dataset.jsonl.bak"
 
 # Format: (style, ability, instruction, target_text)
 TW_POOL = [
@@ -346,6 +343,16 @@ TW_POOL = [
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Replace examples with Taiwan-localized content")
+    parser.add_argument("--input",  required=True,
+                        help="Path to dataset.jsonl (e.g. output_zh/full/dataset.jsonl)")
+    parser.add_argument("--backup", default=None,
+                        help="Backup path (default: <input>.bak)")
+    args = parser.parse_args()
+
+    INPUT  = args.input
+    BACKUP = args.backup or (INPUT + ".bak")
+
     if not Path(BACKUP).exists():
         shutil.copy2(INPUT, BACKUP)
         print(f"Backup created: {BACKUP}")

@@ -2,16 +2,27 @@
 Shuffle all ZH IF parquet samples and re-split into train/dev.
 Uses large_binary for audio column to avoid 2GB int32 offset overflow.
 """
+import argparse
 import pyarrow as pa
 import pyarrow.parquet as pq
 import numpy as np
 import glob, os, collections
 
-INPUT_DIR  = "/work/jaylin0418/IF_data_generation/parquet_output_zh"
-OUTPUT_DIR = "/work/jaylin0418/IF_data_generation/shuffled_output_zh"
-ROWS_PER_FILE = 4000
-DEV_SIZE = 4000
-SEED = 42
+parser = argparse.ArgumentParser(description="Shuffle ZH IF parquet and re-split into train/dev")
+parser.add_argument("--input-dir",  required=True, dest="input_dir",
+                    help="Directory of if_zh_part_*.parquet files (output of to_parquet_if.py)")
+parser.add_argument("--output-dir", required=True, dest="output_dir",
+                    help="Directory to write shuffled_train_part_*.parquet and shuffled_dev.parquet")
+parser.add_argument("--rows-per-file", type=int, default=4000, dest="rows_per_file")
+parser.add_argument("--dev-size",      type=int, default=4000, dest="dev_size")
+parser.add_argument("--seed",          type=int, default=42)
+args = parser.parse_args()
+
+INPUT_DIR     = args.input_dir
+OUTPUT_DIR    = args.output_dir
+ROWS_PER_FILE = args.rows_per_file
+DEV_SIZE      = args.dev_size
+SEED          = args.seed
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 

@@ -172,6 +172,8 @@ def main():
                         help="Total number of parallel workers")
     parser.add_argument("--worker_id",       default=0, type=int,
                         help="This worker's ID (0-indexed)")
+    parser.add_argument("--indextts_dir",    required=True,
+                        help="Path to the cog-IndexTTS-2 repo root (added to sys.path for `from indextts import infer_v2`)")
     args = parser.parse_args()
 
     global SAMPLE_RATE
@@ -221,7 +223,7 @@ def main():
 
     # Load IndexTTS2
     print(f"Loading IndexTTS2 from {args.model_dir} ...")
-    sys.path.insert(0, "/work/jaylin0418/cog-IndexTTS-2")
+    sys.path.insert(0, args.indextts_dir)
     from indextts import infer_v2
 
     original_qwen = getattr(infer_v2, "QwenEmotion", None)
